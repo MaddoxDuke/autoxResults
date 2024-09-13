@@ -33,18 +33,16 @@ public class JsoupMain  {
 			System.out.println("Year entered is invalid.");
 			return;
 		}
-		
-		int eventNum = 0;
-		
+				
 		int[] trNthChild = new int[docSize];
-		int searchNum = 350;
+		int searchNum = 350; //cannot have more entries than 350.
 		//21.7
 		for (int j = 0; j < docSize; j++) { // loop to locate row that contains name
-			for (int i = 0; i < searchNum; i++) {
+			for (int i = 0; i < searchNum; i++) { // information is unsorted so must brute force the data
 					String temp = selectedDocs[j].selectXpath("/html/body/a/table[2]/tbody/tr["+i+"]/td[4]").text(); // name locations
 		            if(temp.contains(name)){
 		                trNthChild[j] = i; // array for name addresses
-		                searchNum = i + 100;
+		                searchNum = i + 100; // the name will not be on a row greater than this. Can narrow search to increase speed
 		                break;
 				}
 		            else trNthChild[j] = -1; // assigns a -1 to the events not participated in
@@ -64,9 +62,6 @@ public class JsoupMain  {
 		finalOutput(docSize, trNthChild, name, year, selectedDocs);
 	}
 	
-	public static void locateLinks() {
-		
-	}
 	public static int currentYear(Document doc, Document[] selectedDocs, int docSize) throws IOException {
 		for (int i = 1; i <= 10; i++) {
 			if (i%2 == 0) {
@@ -90,8 +85,6 @@ public class JsoupMain  {
 	}
 	public static int pastYear(Document doc, Document[] selectedDocs, int docSize, int year) throws IOException {
 		
-		int currentYear = Calendar.getInstance().get(Calendar.YEAR); // will be used for formula		
-
 		for (int i = 1; i <= 10; i++) { // for loop to find the links from the year chosen
 			if (i%2 == 0) {
 				Element link1 = doc.select("#tablepress-300-"+(year-2000)+"R > tbody > tr.row-"+(i)+".even > td.column-4 > a").first(); //even rows
@@ -138,16 +131,3 @@ public class JsoupMain  {
 		
 	}
 }
-	
-
-
-
-
-
-
-
-
-
-
-
-
