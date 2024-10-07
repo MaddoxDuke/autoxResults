@@ -1,52 +1,40 @@
 import java.io.IOException;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.util.ArrayList;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import java.util.Calendar;
 
-public class JsoupMain  {
+public class JsoupMain {
 
-	public static void main(String[] args) throws IOException 
-	{  
+	public static void main(String[] args) throws IOException {  
+		Interface ui = new Interface();
+	}
+	
+	public static void run(int year, String name) throws IOException {
+		ReadingVar in = new ReadingVar(0, null);
+		
 		Document[] selectedDocs = new Document[12]; // array of yearly links to results
 		Document doc;
 		int docSize = 0;
 		
-		String name = "Duke, Maddox";
-		int year = 2022; // year input
-		int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+		System.out.println("Searching...");
 		
-		
-		if (year == currentYear) {
-			doc = Jsoup.connect("https://www.texasscca.org/solo/results/").timeout(6000).get(); // current year link
-			docSize = currentYear(doc, selectedDocs, docSize);
-		}
-		if (year >= (currentYear-10) && year < currentYear){
-			doc = Jsoup.connect("https://www.texasscca.org/solo/results/past-results/").timeout(6000).get();
-			docSize = pastYear(doc, selectedDocs, docSize, year);
-		}
-		if (year < (currentYear-10) || year > currentYear) {
-			System.out.println("Year entered is invalid.");
-			return;
-		}
+		docSize = findYearDoc(year, selectedDocs, docSize);
 				
 		int[] trNthChild = new int[docSize];
-		int searchNum = 350; //cannot have more entries than 350.
+		int searchNum = 350;
 		//21.7
 		for (int j = 0; j < docSize; j++) { // loop to locate row that contains name
-			for (int i = 0; i < searchNum; i++) { // information is unsorted so must brute force the data
+			for (int i = 0; i < searchNum; i++) {
 					String temp = selectedDocs[j].selectXpath("/html/body/a/table[2]/tbody/tr["+i+"]/td[4]").text(); // name locations
 		            if(temp.contains(name)){
 		                trNthChild[j] = i; // array for name addresses
-		                searchNum = i + 100; // the name will not be on a row greater than this. Can narrow search to increase speed
+		                searchNum = i + 100;
 		                break;
 				}
 		            else trNthChild[j] = -1; // assigns a -1 to the events not participated in
 		    }
+			System.out.println("Loading... (" + j + "/" + docSize + ")");
 		}
 		int eventCount = 0;
 		for (int i = 0; i < docSize; i++) { //loop to find if name exists on any of the result links.
@@ -60,6 +48,27 @@ public class JsoupMain  {
 			return;
 		}
 		finalOutput(docSize, trNthChild, name, year, selectedDocs);
+	}
+	
+	public static int findYearDoc(int year, Document[] selectedDocs, int docSize) throws IOException {
+		int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+		Document doc;
+		
+		if (year == currentYear) {
+			doc = Jsoup.connect("https://www.texasscca.org/solo/results/").timeout(6000).get(); // current year link
+			docSize = currentYear(doc, selectedDocs, docSize);
+			return docSize;
+		}
+		if (year >= (currentYear-10) && year < currentYear){
+			doc = Jsoup.connect("https://www.texasscca.org/solo/results/past-results/").timeout(6000).get();
+			docSize = pastYear(doc, selectedDocs, docSize, year);
+			return docSize;
+		}
+		if (year < (currentYear-10) || year > currentYear) {
+			System.out.println("Year entered is invalid.");
+			return -1;
+		}
+		else return -1;
 	}
 	
 	public static int currentYear(Document doc, Document[] selectedDocs, int docSize) throws IOException {
@@ -103,7 +112,6 @@ public class JsoupMain  {
 				}
 			}
 		}
-		
 		return docSize;
 	}
 		
@@ -118,7 +126,8 @@ public class JsoupMain  {
 			}
 			if (j == docSize-1 && trNthChild[j] == -1) break; // breaks from for loop if not participated on last event
 			
-			System.out.println("Event #" + (j+1)); 
+			System.out.println("Event #" + (j+1));
+			
 			
 			for (int i = 7; i <= 9; i++) { // for loop to output the run times
 				System.out.println("Run " + (counter)+ ": " + selectedDocs[j].select("table:nth-child(2) > tbody > tr:nth-child("+trNthChild[j]+") > td:nth-child("+i+")").text()); // time results
@@ -128,6 +137,5 @@ public class JsoupMain  {
 			}
 			System.out.println("Placement: " + selectedDocs[j].select("table:nth-child(2) > tbody > tr:nth-child("+trNthChild[j]+") > td:nth-child(1)").text()); // position
 		}		
-		
 	}
 }
