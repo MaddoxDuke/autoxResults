@@ -4,6 +4,19 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import java.util.Calendar;
 
+/* 
+ * To Do:
+ * Embed in website
+ * 
+ * figure out how to search using classes
+ * 
+ * Display Classes
+ * Display Overall Pax
+ * Display Raw Standing
+ * 
+ * Create database using a class system (Cache)
+ * 
+ */
 public class JsoupMain {
 
 	public static void main(String[] args) throws IOException {  
@@ -11,15 +24,17 @@ public class JsoupMain {
 	}
 	
 	public static void run(int year, String name) throws IOException {
-		ReadingVar in = new ReadingVar(0, null);
+		ReadingVar in = new ReadingVar(year, name, 0, null, null);
 		
 		Document[] selectedDocs = new Document[12]; // array of yearly links to results
-		Document doc;
+		Document doc = null;
 		int docSize = 0;
 		
 		System.out.println("Searching...");
 		
-		docSize = findYearDoc(year, selectedDocs, docSize);
+		in.setYearDoc(doc, selectedDocs, docSize);
+		docSize = in.getDocSize();
+		selectedDocs = in.getSelectedDocs();
 				
 		int[] trNthChild = new int[docSize];
 		int searchNum = 350;
@@ -112,6 +127,7 @@ public class JsoupMain {
 				}
 			}
 		}
+		
 		return docSize;
 	}
 		
@@ -137,5 +153,6 @@ public class JsoupMain {
 			}
 			System.out.println("Placement: " + selectedDocs[j].select("table:nth-child(2) > tbody > tr:nth-child("+trNthChild[j]+") > td:nth-child(1)").text()); // position
 		}		
+		
 	}
 }
