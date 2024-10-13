@@ -6,23 +6,43 @@ import javax.swing.JPanel;
 import org.jsoup.nodes.Document;
 import javax.swing.JFrame;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
+
+/* TO DO:
+ * 
+ * Add Autox Classes
+ * 
+ * Finish Cache
+ * 
+ */
 
 public class Interface implements ActionListener {
 	
 	JFrame frame;
 	static JTextField textfield, textfield1, errorTextfield;
-	JButton[] operatorButtons = new JButton[2]; //array to hold operators
-	JButton enterButton, backButton;
+	JButton[] operatorButtons = new JButton[3]; //array to hold operators
+	JButton enterButton, backButton, resetButton;
 	JPanel panel, resultsPanel, partPanel;
 	JLabel[] resultsText = new JLabel[10];
-	JLabel errorMsg = new JLabel("Error: Name or Year is Invalid.");
-	JLabel nameMsg, yearMsg, notPartcipated;
+	JLabel errorMsg, nameFormat, yearFormat = new JLabel("");
 	Font myFont = new Font("Arial", Font.PLAIN,20); // sets the font style
 	Font eventFont = new Font("Arial", Font.BOLD, 12);
 	Font runFont = new Font("Arial", Font.PLAIN, 9);
 	ReadingVar in = new ReadingVar(0, null, 0, null, null);
 
+	Document doc = null;
+	Document[] selectedDocs = new Document[12];
+	
+	String yearInvalid = "  Year is invalid.";
+	String nameNotFound = "Name not found.";
+	String nameInvalid = " Name entered is invalid.";
+	String name = "";
+	int year = 0;
+	int docSize = 0;
+	int currentYear = Calendar.getInstance().get(Calendar.YEAR);
 
 	
 	Interface() {
@@ -31,6 +51,12 @@ public class Interface implements ActionListener {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // allows exit by closing window
 		frame.setSize(600,600); //frame size
 		frame.setLayout(null);
+		
+		nameFormat = new JLabel("       Name Input: \"Last, First\"");
+		yearFormat = new JLabel("          Year Input: \"20XX\"");
+		
+		nameFormat.setFont(eventFont);
+		yearFormat.setFont(eventFont);
 		
 		textfield = new JTextField(); //text field for name
 		textfield.setBounds(75, 25, 200, 40); // bounds of the text field added above
@@ -47,16 +73,18 @@ public class Interface implements ActionListener {
 		
 		enterButton = new JButton("Search");
 		backButton = new JButton("Back");
+		resetButton = new JButton("Reset");
 		
-		errorMsg.setBounds(160, 150, 250, 30);
 		backButton.setBounds(8, 8, 70, 25);
-
+		
 		
 		operatorButtons[0] = enterButton;
 		operatorButtons[1] = backButton;
+		operatorButtons[2] = resetButton;
 		
 		panel = new JPanel();
-		panel.setBounds(135, 75, 290, 80);
+		panel.setBounds(90, 75, 400, 120);
+		panel.setLayout(new GridLayout(3, 2, 6, 5));
 		
 		partPanel = new JPanel();
 		partPanel.setBounds(200, 460, 300, 50);
@@ -74,26 +102,34 @@ public class Interface implements ActionListener {
 			operatorButtons[i].setFocusable(false); // disables weird outline when selecting button
 		}
 		
+		
+		panel.add(nameFormat);
+		panel.add(yearFormat);
+		panel.add(textfield);
+		panel.add(textfield1);
 		panel.add(enterButton);
+		panel.add(resetButton);
+		
 		frame.add(backButton);
 		backButton.setVisible(false);
 		backButton.setFont(new Font("Arial", Font.PLAIN, 14));
 		
-		frame.add(textfield);
 		frame.add(panel);
 		frame.add(resultsPanel);
 		frame.add(partPanel);
-		frame.add(textfield1);
 		frame.setVisible(true);	
-		
-		panel.add(errorMsg);
-		
-		errorMsg.setVisible(false);
+				
 		resultsPanel.setVisible(false);
 		partPanel.setVisible(false);
+		
 
 	}
+	
 	public void actionPerformed(ActionEvent e) {
+		if (e.getSource() == resetButton) {
+			textfield.setText("");
+			textfield1.setText("");
+		}
 		if (e.getSource() == backButton) {
 			
 			resultsPanel.removeAll();
@@ -109,52 +145,49 @@ public class Interface implements ActionListener {
 		}
 		
 		if (e.getSource() == enterButton) { 
-			
-			
-			Document doc = null;
-			Document[] selectedDocs = new Document[12];
-			String name = "";
-			int year = 0;
-			int tempYear = Integer.parseInt(textfield1.getText());
-			int docSize = 0;
-			int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+		
+			partPanel.removeAll();
+			partPanel.setVisible(false);
+			docSize = 0;
+			selectedDocs = new Document[12];
 			in.setName(textfield.getText());
-			in.setYear(tempYear);
+			if (textfield1 != null) in.setYear(Integer.parseInt(textfield1.getText()));
 			name = in.getName();
 			year = in.getYear();
-			backButton.setVisible(true);
 			
-//			try {
-//				JsoupMain.run(year, name);
-//			} catch (IOException e1) {
-//				// TODO Auto-generated catch block
-//				e1.printStackTrace();
-//			}
-			
-			try {
-				in.setYearDoc(doc, selectedDocs, docSize);
-			} catch (IOException e1) {
-				e1.printStackTrace();
+			if (name == "" || !(name.contains(","))) {
+				errorMsg = new JLabel(nameInvalid);
+				partPanel.add(errorMsg);
+				partPanel.setVisible(true);
 			}
-			
-			docSize = in.getDocSize();
-			selectedDocs = in.getSelectedDocs();
-			
-			if (name == "" || year > currentYear || year < (currentYear -10)) {
-				errorMsg.setVisible(true);
+			if (year > currentYear || year < (currentYear -10)) {
+				errorMsg = new JLabel(yearInvalid);
+				partPanel.add(errorMsg);
+				partPanel.setVisible(true);
 			}
 			else { 
+				try {
+					in.setYearDoc(doc, selectedDocs, docSize);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				docSize = in.getDocSize();
+				selectedDocs = in.getSelectedDocs();
+				backButton.setVisible(true);
 				panel.setVisible(false);
+				partPanel.setVisible(false);
 				textfield.setVisible(false);
 				textfield1.setVisible(false);
-				errorMsg.setVisible(false);
 				displayResults(docSize);
 			}
+			
+			
 		}
 	}
 	
 	public void displayResults(int docSize) { 
 		GridLayout layout = new GridLayout(8,1);
+		boolean chck = false;
 		
 		 Box.Filler glue = (Box.Filler)Box.createVerticalGlue();
 		    glue.changeShape(glue.getMinimumSize(), 
@@ -162,9 +195,15 @@ public class Interface implements ActionListener {
 		                    glue.getMaximumSize());
 		    
 		    		
-		    int[] trNthChild = new int[docSize];
-		    in.setTrNthChild(trNthChild);
-		    
+		    try {
+				chck = checkCache(name, year);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		    if (chck == false) {
+			    int[] trNthChild = new int[docSize];
+			    in.setFindTrNthChild(trNthChild, docSize);
+		    }
 		int eventCount = 0;
 		String event = "Did not participate in event(s)# ";
 		for (int j = 0; j < docSize; j++) {
@@ -226,7 +265,45 @@ public class Interface implements ActionListener {
 		}
 		resultsPanel.add(glue);
 		resultsPanel.setVisible(true);
+		for (int i = 0; i < in.getTrNthChild().length; i++) System.out.println(in.getTrNthChild()[i]);
 		
 		partPanel.setVisible(true);
+		return;
+	}
+	public boolean checkCache(String name, int year) throws IOException{
+		String line = "";
+		String splitBy = ",";
+		String fileName = "Cache.csv";
+		LinkedList<String> list = new LinkedList<String>();
+		in.setDocSize(0);
+		
+		
+		System.out.println("Checking Cache...");
+		
+		FileReader fr = new FileReader(fileName);
+		BufferedReader br = new BufferedReader(fr);
+		
+		line = br.readLine();
+		
+		int count = 0;
+		
+		while ((line = br.readLine()) != null) {
+			String[] data = line.split(splitBy);
+			int year1 = Integer.parseInt(data[0]);
+			String lName = data[1];
+			String fName = data[2];
+			if (name.equalsIgnoreCase(lName + ", " + fName) && year == year1) {
+				int docSize1 = Integer.parseInt(data[3]);
+				int[] arrayAddress = new int[docSize1];
+				for (int i = 0; i < docSize1; i++) {
+					arrayAddress[i] = Integer.parseInt(data[4+i]);
+				}
+				in.setDocSize(docSize1);
+				in.setTrNthChild(arrayAddress);
+				return true;
+			}
+		}
+		System.out.println("Name not in cache.");
+		return false;
 	}
 }
