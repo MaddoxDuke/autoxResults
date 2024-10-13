@@ -30,6 +30,7 @@ public class ReadingVar {
 	}
 	public void setYearDoc(Document doc, Document[] selectedDocs, int docSize) throws IOException {
 		int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+		selectedDocs = new Document[12];
 		
 		if (year == currentYear) {
 			doc = Jsoup.connect("https://www.texasscca.org/solo/results/").timeout(6000).get(); // current year link
@@ -38,17 +39,17 @@ public class ReadingVar {
 				if (i%2 == 0) {
 					Element link1 = doc.select("tr.row-"+(i)+".even > td.column-4 > a").first(); //even rows
 					if (link1 != null) {
-					String url = link1.attr("href"); 
-					selectedDocs[docSize] = Jsoup.connect(url).timeout(6000).get();
-					docSize++;
+						String url = link1.attr("href"); 
+						selectedDocs[docSize] = Jsoup.connect(url).timeout(6000).get();
+						docSize++;
 					}
 				}
 				if (i%2 != 0) {
 					Element link = doc.select("tr.row-"+(i)+".odd > td.column-4 > a").first(); // odd rows
 					if (link != null) {
-					String url = link.attr("href");
-					selectedDocs[docSize] = Jsoup.connect(url).timeout(6000).get();
-					docSize++;
+						String url = link.attr("href");
+						selectedDocs[docSize] = Jsoup.connect(url).timeout(6000).get();
+						docSize++;
 					}
 				}
 			}
@@ -57,7 +58,7 @@ public class ReadingVar {
 		}
 		if (year >= (currentYear-10) && year < currentYear) {
 			doc = Jsoup.connect("https://www.texasscca.org/solo/results/past-results/").timeout(6000).get();
-
+			
 			for (int i = 1; i <= 10; i++) { // for loop to find the links from the year chosen
 				if (i%2 == 0) {
 					Element link1 = doc.select("#tablepress-300-"+(year-2000)+"R > tbody > tr.row-"+(i)+".even > td.column-4 > a").first(); //even rows
@@ -97,17 +98,22 @@ public class ReadingVar {
 	public int getDocSize() {
 		return docSize;
 	}
+	public void setDocSize(int docSize) {
+		this.docSize = docSize;
+	}
 	public int[] getTrNthChild() {
 		return trNthChild;
 	}
 	public void setTrNthChild(int[] trNthChild) {
-		trNthChild = new int[docSize];
+		this.trNthChild = trNthChild;
+	}
+	public void setFindTrNthChild(int[] trNthChild, int docSize) {
 		int searchNum = 350;
 		//21.7
 		for (int j = 0; j < docSize; j++) { // loop to locate row that contains name
 			for (int i = 0; i < searchNum; i++) {
 					String temp = selectedDocs[j].selectXpath("/html/body/a/table[2]/tbody/tr["+i+"]/td[4]").text(); // name locations
-		            if(temp.contains(name)){
+		            if(temp.equalsIgnoreCase(name)){
 		                trNthChild[j] = i; // array for name addresses
 		                searchNum = i + 100;
 		                break;
@@ -119,4 +125,3 @@ public class ReadingVar {
 		this.trNthChild = trNthChild;
 	}
 }
-
