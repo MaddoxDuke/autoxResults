@@ -9,13 +9,12 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 
 
 /* TO DO:
  * 
  * Add Autox Classes
- * 
- * Finish Cache
  * 
  */
 
@@ -43,6 +42,7 @@ public class Interface implements ActionListener {
 	int year = 0;
 	int docSize = 0;
 	int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+	int currentMonth = Calendar.getInstance().get(Calendar.MONTH) + 1;
 
 	
 	Interface() {
@@ -180,13 +180,12 @@ public class Interface implements ActionListener {
 				textfield1.setVisible(false);
 				displayResults(docSize);
 			}
-			
-			
 		}
 	}
 	
 	public void displayResults(int docSize) { 
 		GridLayout layout = new GridLayout(8,1);
+		boolean newCacheFile = false;
 		boolean chck = false;
 		
 		 Box.Filler glue = (Box.Filler)Box.createVerticalGlue();
@@ -203,6 +202,12 @@ public class Interface implements ActionListener {
 		    if (chck == false) {
 			    int[] trNthChild = new int[docSize];
 			    in.setFindTrNthChild(trNthChild, docSize);
+			    try {
+					newCacheFile = newCache();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 		    }
 		int eventCount = 0;
 		String event = "Did not participate in event(s)# ";
@@ -266,26 +271,72 @@ public class Interface implements ActionListener {
 		resultsPanel.add(glue);
 		resultsPanel.setVisible(true);
 		for (int i = 0; i < in.getTrNthChild().length; i++) System.out.println(in.getTrNthChild()[i]);
-		
+		try {
+			if (chck == false && newCacheFile == false) addToCache();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		partPanel.setVisible(true);
 		return;
 	}
-	public boolean checkCache(String name, int year) throws IOException{
+	public void addToCache() throws IOException{
 		String line = "";
-		String splitBy = ",";
+		System.out.println("Adding to cache...");		
 		String fileName = "Cache.csv";
-		LinkedList<String> list = new LinkedList<String>();
-		in.setDocSize(0);
-		
-		
-		System.out.println("Checking Cache...");
-		
 		FileReader fr = new FileReader(fileName);
 		BufferedReader br = new BufferedReader(fr);
 		
-		line = br.readLine();
+		String tempYear = br.readLine();
+		System.out.println(tempYear);
+		br.readLine();
+						
+		try (FileWriter Writer = new FileWriter(fileName, true)) {
+			
+			while (br.readLine() != null) {
+				line = br.readLine();
+			}
+	
+				if (br.readLine() == null) {
+					Writer.append(Integer.toString(in.getYear()))
+						  .append(',')
+						  .append(in.getName().replaceAll("\\s+",""))
+						  .append(',')
+						  .append(Integer.toString(in.getDocSize()))
+						  .append(',');
+					for (int i = 0; i < in.getDocSize(); i++) {
+						Writer.append(Integer.toString(in.getTrNthChild()[i]))
+							  .append(',');
+					}
+					Writer.append("\n");
+					Writer.close();
+					System.out.println("Added to Cache.");
+					
+					Writer.close();
+					return;
+				}
+			
+		}
 		
-		int count = 0;
+		return;
+	}
+	public boolean checkCache(String name, int year) throws IOException{
+
+		String line = "";
+		String splitBy = ",";
+		String fileName = "Cache.csv";
+		FileReader fr = new FileReader(fileName);
+		BufferedReader br = new BufferedReader(fr);
+		LinkedList<String> list = new LinkedList<String>();
+		
+		System.out.println("Checking Cache...");
+		
+		String tempMonth = br.readLine();
+		System.out.println(tempMonth);
+		
+		if (!tempMonth.contentEquals(Integer.toString(currentMonth))) {
+			return false;
+		}
 		
 		while ((line = br.readLine()) != null) {
 			String[] data = line.split(splitBy);
@@ -305,5 +356,39 @@ public class Interface implements ActionListener {
 		}
 		System.out.println("Name not in cache.");
 		return false;
+	}
+	public boolean newCache() throws IOException {
+		String tempCache = "tempCache.csv";
+		String cache = "Cache.csv";
+		
+		FileReader fr = new FileReader(cache);
+		BufferedReader br = new BufferedReader(fr);
+		
+		if (br.readLine().contentEquals(Integer.toString(currentMonth))) return false;
+				
+		try (FileWriter tempWriter = new FileWriter(cache, false)) {
+				
+					tempWriter.append(Integer.toString(currentMonth))
+						  .append("\n")
+						  .append(Integer.toString(in.getYear()))
+						  .append(',')
+						  .append(in.getName().replaceAll("\\s+",""))
+						  .append(',')
+						  .append(Integer.toString(in.getDocSize()))
+						  .append(',');
+					for (int i = 0; i < in.getDocSize(); i++) {
+						tempWriter.append(Integer.toString(in.getTrNthChild()[i]))
+							  .append(',');
+					}
+					tempWriter.append("\n");
+					tempWriter.close();
+					System.out.println("Added to Cache.");
+					
+					tempWriter.close();
+					return true;
+		}
+		catch (IOException e) {
+			return false;
+		}	
 	}
 }
