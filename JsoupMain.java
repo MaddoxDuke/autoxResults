@@ -22,7 +22,7 @@ public class JsoupMain {
 	public static void main(String[] args) throws IOException {  
 		Interface ui = new Interface();
 	}
-	
+	/*
 	public static void run(int year, String name) throws IOException {
 		ReadingVar in = new ReadingVar(year, name, 0, null, null);
 		
@@ -155,4 +155,5 @@ public class JsoupMain {
 		}		
 		
 	}
+	*/
 }
