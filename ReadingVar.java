@@ -30,59 +30,47 @@ public class ReadingVar {
 	}
 	public void setYearDoc(Document doc, Document[] selectedDocs, int docSize) throws IOException {
 		int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-		selectedDocs = new Document[12];
 		
 		if (year == currentYear) {
-			doc = Jsoup.connect("https://www.texasscca.org/solo/results/").timeout(6000).get(); // current year link
+			this.docSize = 0;
+			doc = Jsoup.connect("https://www.texasscca.org/solo/results/").timeout(6000).get();
+			for (int i = 1; i < 12; i++) { 
+				if (doc.selectXpath("//*[@id=\"tablepress-300-24R\"]/tbody/tr["+i+"]/td[1]").hasText()) this.docSize++;
+			}			
+			this.selectedDocs = new Document[this.docSize];
 
-			for (int i = 1; i <= 10; i++) {
+
+			for (int i = 1; i <= this.docSize; i++) {
 				if (i%2 == 0) {
-					Element link1 = doc.select("tr.row-"+(i)+".even > td.column-4 > a").first(); //even rows
-					if (link1 != null) {
-						String url = link1.attr("href"); 
-						selectedDocs[docSize] = Jsoup.connect(url).timeout(6000).get();
-						docSize++;
-					}
+						this.selectedDocs[i-1] = Jsoup.connect("https://www.texasscca.org/Solo/"+year+"/Results/"+year+"-E"+i+"-Final.htm").timeout(6000).get();
 				}
 				if (i%2 != 0) {
-					Element link = doc.select("tr.row-"+(i)+".odd > td.column-4 > a").first(); // odd rows
-					if (link != null) {
-						String url = link.attr("href");
-						selectedDocs[docSize] = Jsoup.connect(url).timeout(6000).get();
-						docSize++;
-					}
+						this.selectedDocs[i-1] = Jsoup.connect("https://www.texasscca.org/Solo/"+year+"/Results/"+year+"-E"+i+"-Final.htm").timeout(6000).get();
 				}
 			}
-			this.selectedDocs = selectedDocs;
-			this.docSize = docSize;
 		}
 		if (year >= (currentYear-10) && year < currentYear) {
 			doc = Jsoup.connect("https://www.texasscca.org/solo/results/past-results/").timeout(6000).get();
+			int count = 0;
+			this.docSize = 0;
 			
-			for (int i = 1; i <= 10; i++) { // for loop to find the links from the year chosen
-				if (i%2 == 0) {
-					Element link1 = doc.select("#tablepress-300-"+(year-2000)+"R > tbody > tr.row-"+(i)+".even > td.column-4 > a").first(); //even rows
-					if (link1 != null) {
-						String url = link1.attr("href"); 
-						selectedDocs[docSize] = Jsoup.connect(url).timeout(6000).get();
-						docSize++;
-					}
+			for (int i = 1; i < 12; i++) if (doc.selectXpath("//*[@id=\"tablepress-300-"+(year-2000)+"R\"]/tbody/tr["+i+"]/td[1]").hasText()) this.docSize++;
+			
+			this.selectedDocs = new Document[this.docSize];
+
+			for (int i = 1; i <= this.docSize; i++) { // for loop to find the links from the year chosen
+				if (i%2 == 0) {					
+					this.selectedDocs[i-1] = Jsoup.connect("https://www.texasscca.org/Solo/"+year+"/Results/"+year+"-E"+i+"-Final.htm").timeout(6000).get();
 				}
 				if (i%2 != 0) {
-					Element link = doc.select("#tablepress-300-"+(year-2000)+"R > tbody > tr.row-"+(i)+".odd > td.column-4 > a").first(); // odd rows
-					if (link != null) {
-						String url = link.attr("href");
-						selectedDocs[docSize] = Jsoup.connect(url).timeout(6000).get();
-						docSize++;
-					}
+					this.selectedDocs[i-1] = Jsoup.connect("https://www.texasscca.org/Solo/"+year+"/Results/"+year+"-E"+i+"-Final.htm").timeout(6000).get();
 				}
 			}
-			this.selectedDocs = selectedDocs;
-			this.docSize = docSize;
 		}
 		if (year < (currentYear-10) || year > currentYear) {
 			System.out.println("Year entered is invalid.");
 		}
+		System.out.println(docSize);
 	}
 	public Document[] getSelectedDocs() {
 		return selectedDocs;
@@ -110,7 +98,7 @@ public class ReadingVar {
 	public void setFindTrNthChild(int[] trNthChild, int docSize) {
 		int searchNum = 350;
 		//21.7
-		for (int j = 0; j < docSize; j++) { // loop to locate row that contains name
+		for (int j = 0; j < this.docSize; j++) { // loop to locate row that contains name
 			for (int i = 0; i < searchNum; i++) {
 					String temp = selectedDocs[j].selectXpath("/html/body/a/table[2]/tbody/tr["+i+"]/td[4]").text(); // name locations
 		            if(temp.equalsIgnoreCase(name)){
